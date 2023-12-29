@@ -236,7 +236,6 @@ bool FeatureManager::solvePoseByPnP(Eigen::Matrix3d &R, Eigen::Vector3d &P,
     bool pnp_succ;
     pnp_succ = cv::solvePnP(pts3D, pts2D, K, D, rvec, t, 1);
     //pnp_succ = solvePnPRansac(pts3D, pts2D, K, D, rvec, t, true, 100, 8.0 / focalLength, 0.99, inliers);
-
     if(!pnp_succ)
     {
         printf("pnp failed ! \n");
@@ -286,6 +285,7 @@ void FeatureManager::initFramePoseByPnP(int frameCnt, Vector3d Ps[], Matrix3d Rs
         RCam = Rs[frameCnt - 1] * ric[0];
         PCam = Rs[frameCnt - 1] * tic[0] + Ps[frameCnt - 1];
 
+        
         if(solvePoseByPnP(RCam, PCam, pts2D, pts3D))
         {
             // trans to w_T_imu

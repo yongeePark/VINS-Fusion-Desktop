@@ -21,6 +21,11 @@
 #include "estimator/parameters.h"
 #include "utility/visualization.h"
 
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+
+
 Estimator estimator;
 
 queue<sensor_msgs::ImuConstPtr> imu_buf;
@@ -28,7 +33,7 @@ queue<sensor_msgs::PointCloudConstPtr> feature_buf;
 queue<sensor_msgs::ImageConstPtr> img0_buf;
 queue<sensor_msgs::ImageConstPtr> img1_buf;
 std::mutex m_buf;
-
+void sync_process();
 
 void img0_callback(const sensor_msgs::ImageConstPtr &img_msg)
 {
@@ -43,13 +48,27 @@ void img1_callback(const sensor_msgs::ImageConstPtr &img_msg)
     img1_buf.push(img_msg);
     m_buf.unlock();
 }
+void img_callback(const sensor_msgs::ImageConstPtr &img0_msg, const sensor_msgs::ImageConstPtr &img1_msg)
+{
+    //m_buf.lock();
 
+    img0_buf.push(img0_msg);
+    img1_buf.push(img1_msg);
+    
+    sync_process();
+
+
+    //m_buf.unlock();
+}
 
 cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
 {
+    static int count = 0;
     cv_bridge::CvImageConstPtr ptr;
-    if (img_msg->encoding == "8UC1")
+    //if (img_msg->encoding == "8UC1")
+    if (true)
     {
+        // printf("Here?");
         sensor_msgs::Image img;
         img.header = img_msg->header;
         img.height = img_msg->height;
@@ -58,20 +77,36 @@ cv::Mat getImageFromMsg(const sensor_msgs::ImageConstPtr &img_msg)
         img.step = img_msg->step;
         img.data = img_msg->data;
         img.encoding = "mono8";
-        ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::MONO8);
+        //ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::MONO8);
+        ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::TYPE_8UC1);
     }
     else
         ptr = cv_bridge::toCvCopy(img_msg, sensor_msgs::image_encodings::MONO8);
 
     cv::Mat img = ptr->image.clone();
+    //cv::imshow("leftImage", img);
+    //cv::waitKey(20);
+    // printf("Image %d",count);
+    count++;
+    
     return img;
 }
 
 // extract images with same timestamp from two topics
 void sync_process()
 {
-    while(1)
-    {
+    //while(1)
+    //{
+    static int count = 0;
+    stringstream ss;
+    string leftImagePath, rightImagePath;
+	cv::Mat imLeft1, imRight1;
+    ss << setfill('0') << setw(6) << count;
+    string dataPath = "/home/usrg/nn_image_conversion/OfficialDataset/KITTI/sequences/00/";
+    leftImagePath = dataPath + "image_0/" + ss.str() + ".png";
+    rightImagePath = dataPath + "image_1/" + ss.str() + ".png";
+    // imLeft1 = cv::imread(leftImagePath, cv::IMREAD_GRAYSCALE );
+    // imRight1 = cv::imread(rightImagePath, cv::IMREAD_GRAYSCALE );
         if(STEREO)
         {
             cv::Mat image0, image1;
@@ -105,8 +140,27 @@ void sync_process()
                 }
             }
             m_buf.unlock();
-            if(!image0.empty())
+            if(!image0.empty() && !image1.empty())
+            // if(true)
+            {
+                // cv::Mat imdiff_left,imdiff_right;
+                // cv::absdiff(image0,imLeft1,imdiff_left);
+                // cv::absdiff(image1,imRight1,imdiff_right);
+                // cv::imshow("diff_left",imdiff_left);
+                // cv::waitKey(1);
+                // cv::imshow("imread_right",imRight1);
+                // cv::waitKey(1);
+                // cv::imshow("ros_right",image1);
+                // cv::waitKey(1);
+                // cv::imshow("diff_right",imdiff_right);
+                // cv::waitKey(0);
+                printf("\nprocess image %d\n",count);
+                count++;
                 estimator.inputImage(time, image0, image1);
+                // estimator.inputImage(time, imLeft1, imRight1);
+                // temp
+                std::cout<<"time : "<<time<<std::endl;
+            }
         }
         else
         {
@@ -126,9 +180,9 @@ void sync_process()
                 estimator.inputImage(time, image);
         }
 
-        std::chrono::milliseconds dura(2);
+        std::chrono::milliseconds dura(1);
         std::this_thread::sleep_for(dura);
-    }
+    //}
 }
 
 
@@ -255,17 +309,26 @@ int main(int argc, char **argv)
         sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
     }
     ros::Subscriber sub_feature = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
+
+    message_filters::Subscriber<sensor_msgs::Image> sub_img0(n,IMAGE0_TOPIC, 1000);
+    message_filters::Subscriber<sensor_msgs::Image> sub_img1(n,IMAGE1_TOPIC, 1000);
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> MySyncPolicy;
+
+    message_filters::Synchronizer<MySyncPolicy> sync(MySyncPolicy(1000),sub_img0, sub_img1);
+    sync.registerCallback(boost::bind(&img_callback, _1, _2));
+/*
     ros::Subscriber sub_img0 = n.subscribe(IMAGE0_TOPIC, 100, img0_callback);
     ros::Subscriber sub_img1;
     if(STEREO)
     {
         sub_img1 = n.subscribe(IMAGE1_TOPIC, 100, img1_callback);
     }
+*/
     ros::Subscriber sub_restart = n.subscribe("/vins_restart", 100, restart_callback);
     ros::Subscriber sub_imu_switch = n.subscribe("/vins_imu_switch", 100, imu_switch_callback);
     ros::Subscriber sub_cam_switch = n.subscribe("/vins_cam_switch", 100, cam_switch_callback);
 
-    std::thread sync_thread{sync_process};
+    //std::thread sync_thread{sync_process};
     ros::spin();
 
     return 0;

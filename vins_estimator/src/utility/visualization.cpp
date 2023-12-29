@@ -73,9 +73,10 @@ void pubTrackImage(const cv::Mat &imgTrack, const double t)
     std_msgs::Header header;
     header.frame_id = "world";
     header.stamp = ros::Time(t);
+    // header.stamp = ros::Time::now();
     sensor_msgs::ImagePtr imgTrackMsg = cv_bridge::CvImage(header, "bgr8", imgTrack).toImageMsg();
     pub_image_track.publish(imgTrackMsg);
-}
+    }
 
 
 void printStatistics(const Estimator &estimator, double t)
@@ -127,8 +128,9 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
     {
         nav_msgs::Odometry odometry;
         odometry.header = header;
-        odometry.header.frame_id = "world";
-        odometry.child_frame_id = "world";
+        odometry.header.stamp = ros::Time::now();
+        odometry.header.frame_id = "/camera_init";
+        odometry.child_frame_id = "/camera_init";
         Quaterniond tmp_Q;
         tmp_Q = Quaterniond(estimator.Rs[WINDOW_SIZE]);
         odometry.pose.pose.position.x = estimator.Ps[WINDOW_SIZE].x();
@@ -219,9 +221,21 @@ void pubCameraPose(const Estimator &estimator, const std_msgs::Header &header)
         Vector3d P = estimator.Ps[i] + estimator.Rs[i] * estimator.tic[0];
         Quaterniond R = Quaterniond(estimator.Rs[i] * estimator.ric[0]);
 
+        // Jaeyong Added : frame should be world frame, not camera frame
+        // world frame
+        // X : front, Y : left, Z : up
+        Eigen::Matrix3d changer;
+        changer <<   0.0,  0.0,  1.0,
+                    -1.0,  0.0,  0.0,
+                     0.0, -1.0,  0.0; // x 90, and z 90
+
+        //
+        P = changer * P;
+
         nav_msgs::Odometry odometry;
         odometry.header = header;
-        odometry.header.frame_id = "world";
+        odometry.header.stamp = ros::Time::now();
+        odometry.header.frame_id = "map";
         odometry.pose.pose.position.x = P.x();
         odometry.pose.pose.position.y = P.y();
         odometry.pose.pose.position.z = P.z();

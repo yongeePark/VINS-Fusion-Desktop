@@ -182,6 +182,19 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
             if (mask.type() != CV_8UC1)
                 cout << "mask type wrong " << endl;
             cv::goodFeaturesToTrack(cur_img, n_pts, MAX_CNT - cur_pts.size(), 0.01, MIN_DIST, mask);
+
+            // debug
+            /*
+            cv::Mat cvCorner = cur_img.clone();
+            for(int i=0; i<n_pts.size() ; i++){
+            circle(cvCorner, n_pts[i], 5, cv::Scalar(0, 255, 0),3);
+
+            }
+
+            cv::imshow("cvCorner", cvCorner);
+            cv::waitKey(100);
+            */
+            // debug end
         }
         else
             n_pts.clear();

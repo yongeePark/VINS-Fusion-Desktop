@@ -167,7 +167,16 @@ void Estimator::inputImage(double t, const cv::Mat &_img, const cv::Mat &_img1)
         featureFrame = featureTracker.trackImage(t, _img);
     else
         featureFrame = featureTracker.trackImage(t, _img, _img1);
-    //printf("featureTracker time: %f\n", featureTrackerTime.toc());
+    // printf("featureTracker time: %f\n", featureTrackerTime.toc());
+
+    // debug
+    /*
+    double min,max;
+    cv::minMaxLoc(_img, &min, &max);
+    printf("min, max : %f %f",min,max);
+    */
+
+    //debug end
 
     if (SHOW_TRACK)
     {
@@ -278,6 +287,7 @@ void Estimator::processMeasurements()
         {
             feature = featureBuf.front();
             curTime = feature.first + td;
+            
             while(1)
             {
                 if ((!USE_IMU  || IMUAvailable(feature.first + td)))
@@ -337,6 +347,7 @@ void Estimator::processMeasurements()
             break;
 
         std::chrono::milliseconds dura(2);
+        //std::chrono::milliseconds dura(1000);
         std::this_thread::sleep_for(dura);
     }
 }
@@ -481,6 +492,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if(STEREO && USE_IMU)
         {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
+            
             f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
             if (frame_count == WINDOW_SIZE)
             {
@@ -509,6 +521,7 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
         if(STEREO && !USE_IMU)
         {
             f_manager.initFramePoseByPnP(frame_count, Ps, Rs, tic, ric);
+            
             f_manager.triangulate(frame_count, Ps, Rs, tic, ric);
             optimization();
 

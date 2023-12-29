@@ -1,0 +1,9 @@
+<launch>
+    <!-- <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find vins)/../config/vins_rviz_config.rviz" /> -->
+    <node name="vins_estimator" pkg="vins" type="vins_node" output="screen" args="/home/usrg/catkin_ws/src/VINS-Fusion-Desktop/config/realsense_d435i/realsense_stereo_imu_config.yaml"/>
+    <node name="vins_estimator_processed" pkg="vins" type="vins_node" output="screen" args="/home/usrg/catkin_ws/src/VINS-Fusion-Desktop/config/realsense_d435i/realsense_stereo_imu_config_processed.yaml"/>
+    
+    <!-- optional -->
+    <node name="loop_fusion" pkg="loop_fusion" type="loop_fusion_node" output="screen" args="/home/usrg/catkin_ws/src/VINS-Fusion-Desktop/config/realsense_d435i/realsense_stereo_imu_config.yaml"/>
+    <node name="loop_fusion_processed" pkg="loop_fusion" type="loop_fusion_node" output="screen" args="/home/usrg/catkin_ws/src/VINS-Fusion-Desktop/config/realsense_d435i/realsense_stereo_imu_config_processed.yaml"/>
+</launch>

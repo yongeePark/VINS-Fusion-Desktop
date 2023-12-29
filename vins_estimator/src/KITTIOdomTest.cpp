@@ -79,6 +79,7 @@ int main(int argc, char** argv)
 	if(outFile == NULL)
 		printf("Output path dosen't exist: %s\n", OUTPUT_FOLDER.c_str());
 
+	ros::Rate loop_rate(500);
 	for (size_t i = 0; i < imageTimeList.size(); i++)
 	{	
 		if(ros::ok())
@@ -112,9 +113,15 @@ int main(int argc, char** argv)
 																	       pose(1,0), pose(1,1), pose(1,2),pose(1,3),
 																	       pose(2,0), pose(2,1), pose(2,2),pose(2,3));
 			
-			//cv::imshow("leftImage", imLeft);
-			//cv::imshow("rightImage", imRight);
-			//cv::waitKey(2);
+			cv::imshow("leftImage", imLeft);
+			cv::imshow("rightImage", imRight);
+			cv::waitKey(2);
+			printf("sleep\n");
+			loop_rate.sleep();
+			printf("wakeup!\n");
+
+			if (i>3)
+			{	break;	}
 		}
 		else
 			break;

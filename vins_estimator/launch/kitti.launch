@@ -1,0 +1,16 @@
+<launch>
+    
+    <!-- <node name="rvizvisualisation" pkg="rviz" type="rviz" output="log" args="-d $(find vins)/../config/vins_rviz_config.rviz" /> -->
+    <node name="vins_estimator" pkg="vins" type="vins_node" output="screen" args="/home/usrg/catkin_ws/src/VINS-Fusion-Desktop/config/kitti_odom/kitti_config00-02.yaml"/>
+    
+    <!-- optional -->
+    <!-- <node name="loop_fusion" pkg="loop_fusion" type="loop_fusion_node" output="screen" args="$(find vins)/../config/kitti_odom/kitti_config00-02.yaml"/> -->
+
+    
+    <!-- rosrun vins kitti_odom_test /home/usrg/catkin_ws/src/VINS-Fusion-Desktop/config/kitti_odom/kitti_config00-02.yaml /home/usrg/nn_image_conversion/OfficialDataset/KITTI/sequences/00/ -->
+    <!-- tf -->
+    
+    <!-- <node pkg="tf" type="static_transform_publisher" name="transform_node" args="0 0 0 0 0 0 world /camera_init 10" /> -->
+
+
+</launch>
